@@ -1,0 +1,12 @@
+{
+  "name": "invitacion-erika-50",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Invitación RSVP de Erika con almacenamiento JSON en servidor",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js"
+  }
+}

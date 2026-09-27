@@ -1,0 +1,4 @@
+.env
+confirmaciones.json
+confirmaciones.json.*.tmp
+node_modules/
