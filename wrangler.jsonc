@@ -12,7 +12,7 @@
     {
       "binding": "DB",
       "database_name": "erika-rsvp-db",
-      "database_id": "00000000-0000-4000-8000-000000000001",
+      "database_id": "a4cd94b9-0be4-4090-bb6c-45d39c3377da",
       "migrations_dir": "migrations"
     }
   ]
