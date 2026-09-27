@@ -167,11 +167,36 @@ async function handleApi(request, env) {
   const url = new URL(request.url);
   const route = url.pathname;
 
+  if (request.method === "GET" && route === "/api/health") {
+    const checks = {
+      sessionSecret: Boolean(env.SESSION_SECRET),
+      adminPassword: Boolean(env.ADMIN_PASSWORD),
+      database: false,
+      rsvpTable: false,
+      adminTable: false
+    };
+    try {
+      await env.DB.prepare("SELECT 1 AS ok").first();
+      checks.database = true;
+      await env.DB.prepare("SELECT COUNT(*) AS total FROM rsvps").first();
+      checks.rsvpTable = true;
+      await env.DB.prepare("SELECT COUNT(*) AS total FROM admin_login_attempts").first();
+      checks.adminTable = true;
+    } catch (error) {
+      console.error("Health check failed.", error);
+    }
+    const ready = Object.values(checks).every(Boolean);
+    return jsonResponse({ status: ready ? "ok" : "misconfigured", checks }, ready ? 200 : 503);
+  }
+
   if (route.startsWith("/api/") && !hasSameOrigin(request)) {
     return jsonResponse({ error: "Origen no permitido." }, 403);
   }
 
   if (request.method === "GET" && route === "/api/rsvp/me") {
+    if (!env.SESSION_SECRET) {
+      return jsonResponse({ error: "Falta configurar SESSION_SECRET en los secrets del Worker." }, 503);
+    }
     const guest = await guestSession(request, env);
     const record = await env.DB.prepare(
       "SELECT id, name, attend, companions, message, updated_at FROM rsvps WHERE guest_id = ?"
@@ -180,6 +205,9 @@ async function handleApi(request, env) {
   }
 
   if (request.method === "POST" && route === "/api/rsvp") {
+    if (!env.SESSION_SECRET) {
+      return jsonResponse({ error: "Falta configurar SESSION_SECRET en los secrets del Worker." }, 503);
+    }
     const bodyResult = await readJsonBody(request);
     if (bodyResult.error) return bodyResult.error;
     const body = bodyResult.value;
@@ -197,9 +225,8 @@ async function handleApi(request, env) {
   }
 
   if (request.method === "POST" && route === "/api/admin/login") {
-    if (!env.ADMIN_PASSWORD || !env.SESSION_SECRET) {
-      return jsonResponse({ error: "Falta configurar el acceso de organizador." }, 500);
-    }
+    if (!env.ADMIN_PASSWORD) return jsonResponse({ error: "Falta configurar ADMIN_PASSWORD en los secrets del Worker." }, 503);
+    if (!env.SESSION_SECRET) return jsonResponse({ error: "Falta configurar SESSION_SECRET en los secrets del Worker." }, 503);
     const ipHash = await clientHash(request, env.SESSION_SECRET);
     const now = Math.floor(Date.now() / 1000);
     await env.DB.prepare("DELETE FROM admin_login_attempts WHERE attempted_at < ?").bind(now - LOGIN_WINDOW_SECONDS).run();
