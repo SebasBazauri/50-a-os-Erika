@@ -2,11 +2,18 @@
   "name": "invitacion-erika-50",
   "version": "1.0.0",
   "private": true,
-  "description": "Invitación RSVP de Erika con almacenamiento JSON en servidor",
+  "description": "Invitación RSVP de Erika para Cloudflare Workers y D1",
   "engines": {
     "node": ">=22.9"
   },
   "scripts": {
-    "start": "node --env-file-if-exists=.env server.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create erika-rsvp-db",
+    "db:migrate:local": "wrangler d1 migrations apply erika-rsvp-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply erika-rsvp-db --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.142.0"
   }
 }

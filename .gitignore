@@ -1,4 +1,8 @@
 .env
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 confirmaciones.json
 confirmaciones.json.*.tmp
 node_modules/
+.wrangler/
